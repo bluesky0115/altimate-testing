@@ -1,6 +1,5 @@
 import * as React from 'react';
-import PropTypes from 'prop-types';
-import { useTheme } from '@mui/material/styles';
+import TablePaginationActions from './TablePagination'
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -10,94 +9,25 @@ import TableFooter from '@mui/material/TableFooter';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import IconButton from '@mui/material/IconButton';
-import FirstPageIcon from '@mui/icons-material/FirstPage';
-import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
-import LastPageIcon from '@mui/icons-material/LastPage';
 import { TableHead, TextField } from '@mui/material';
 import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import { useForm } from "react-hook-form";
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
+import AddDialog from './AddDialog';
+import DeleteDialog from './DeleteDialog';
+import EditDialog from './EditDialog';
 
-function TablePaginationActions(props) {
-  const theme = useTheme();
-  const { count, page, rowsPerPage, onPageChange } = props;
-
-  const handleFirstPageButtonClick = (event) => {
-    onPageChange(event, 0);
-  };
-
-  const handleBackButtonClick = (event) => {
-    onPageChange(event, page - 1);
-  };
-
-  const handleNextButtonClick = (event) => {
-    onPageChange(event, page + 1);
-  };
-
-  const handleLastPageButtonClick = (event) => {
-    onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
-  };
-
-  return (
-    <Box sx={{ flexShrink: 0, ml: 2.5 }}>
-      <IconButton
-        onClick={handleFirstPageButtonClick}
-        disabled={page === 0}
-        aria-label="first page"
-      >
-        {theme.direction === 'rtl' ? <LastPageIcon /> : <FirstPageIcon />}
-      </IconButton>
-      <IconButton
-        onClick={handleBackButtonClick}
-        disabled={page === 0}
-        aria-label="previous page"
-      >
-        {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
-      </IconButton>
-      <IconButton
-        onClick={handleNextButtonClick}
-        disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="next page"
-      >
-        {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
-      </IconButton>
-      <IconButton
-        onClick={handleLastPageButtonClick}
-        disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-        aria-label="last page"
-      >
-        {theme.direction === 'rtl' ? <FirstPageIcon /> : <LastPageIcon />}
-      </IconButton>
-    </Box>
-  );
-}
-
-TablePaginationActions.propTypes = {
-  count: PropTypes.number.isRequired,
-  onPageChange: PropTypes.func.isRequired,
-  page: PropTypes.number.isRequired,
-  rowsPerPage: PropTypes.number.isRequired,
-};
-
-export default function CustomPaginationActionsTable() {
+export default function Dashboard() {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 	const [rows, setRows ] = React.useState([]);
-	const [open, setOpen] = React.useState(false);
-	const [status, setStatus] = React.useState('')
+	const [open, setOpen] = React.useState(0);
 	const [filteruserid, setFilterUserId ] = React.useState('')
 	const [filterStatus, setFilterStatus ] = React.useState('')
-	const { register, setValue, handleSubmit } = useForm();
-	
+	const [selectItem, setSelectItem] = React.useState(null)
+
 	React.useEffect(() => {
 		if(filteruserid != '' && filterStatus !== '')
 			fetch(`https://jsonplaceholder.typicode.com/todos?userId=${filteruserid}&&completed=${filterStatus}`)
@@ -146,18 +76,49 @@ export default function CustomPaginationActionsTable() {
 		.then((response) => response.json())
 		.then((json) => {
 			setRows([...rows, json])
-			setOpen(false)
+			setOpen(0)
 		});
 	}
 
-	const onDelete = (id) => {
-		fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
+	const onDelete = () => {
+		fetch(`https://jsonplaceholder.typicode.com/todos/${selectItem.id}`, {
 			method: 'DELETE',
 		}).then((response) => response.json())
 		.then((json) => {
-			const newArr = rows.filter((val) => val.id !== id)
+			const newArr = rows.filter((val) => val.id !== selectItem.id)
+			setSelectItem(null)
 			setRows(newArr)
+			setOpen(0)
 		})
+	}
+
+	const onEdit = (data) => {
+		fetch('https://jsonplaceholder.typicode.com/posts/1', {
+			method: 'PUT',
+			body: JSON.stringify({
+				id: selectItem.id,
+				title: data.title,
+				userId: data.userId,
+				completed: data.completed,
+			}),
+			headers: {
+				'Content-type': 'application/json; charset=UTF-8',
+			},
+		})
+		.then((response) => response.json())
+		.then((json) => {
+			setSelectItem(null)
+			const newArr = rows.filter((val) => {
+				if(val.id == selectItem.id) {
+					val.title = data.title
+					val.userId = data.userId
+					val.completed = data.completed
+				}
+				return val
+			})
+			setRows(newArr)
+			setOpen(0)
+		});
 	}
 
   return (
@@ -165,7 +126,7 @@ export default function CustomPaginationActionsTable() {
 			<Box component="div" sx={{padding: '20px'}}>
 				<Box component="div" sx={{display: 'flex', alignItems: 'center', justifyContent:'center', gap: '12px'}}>
 					<TextField placeholder='User Id' value={filteruserid} onChange={(e) => setFilterUserId(e.target.value)}/>
-					<FormControl sx={{width: '300px'}}>
+					<FormControl sx={{width: '250px'}}>
 						<InputLabel id="demo-simple-select-label">Completed Status</InputLabel>
 						<Select
 							labelId="demo-simple-select-label"
@@ -179,57 +140,14 @@ export default function CustomPaginationActionsTable() {
 							<MenuItem value={true}>true</MenuItem>
 						</Select>
 					</FormControl>
-					<Button variant="contained" onClick={() => setOpen(true)}>
+					<Button variant="contained" onClick={() => setOpen(1)}>
 						Add
 					</Button>
 				</Box>
-				<Dialog
-					open={open}
-					onClose={() => setOpen(false)}
-					aria-labelledby="alert-dialog-title"
-					aria-describedby="alert-dialog-description"
-				>
-					<DialogTitle id="alert-dialog-title">
-						Add Dialog
-					</DialogTitle>
-					<Box component="form" onSubmit={handleSubmit(onSubmit)}>
-						<DialogContent>
-							<Box sx={{
-								display: 'flex',
-								flexDirection: 'column',
-								gap: '20px',
-							}}>
-								<TextField placeholder='Title' {...register('title')}/>
-								<TextField placeholder='User Id' {...register('userId')}/>
-
-								<FormControl fullWidth>
-									<InputLabel id="demo-simple-select-label">Completed Status</InputLabel>
-									<Select
-										labelId="demo-simple-select-label"
-										id="demo-simple-select"
-										value={status}
-										label="Completed Status"
-										onChange={(e) => {
-											setStatus(e.target.value)
-											setValue('completed', e.target.value)
-										}}
-									>
-										<MenuItem value={false}>false</MenuItem>
-										<MenuItem value={true}>true</MenuItem>
-									</Select>
-								</FormControl>
-							</Box>
-						</DialogContent>
-						<DialogActions>
-							<Button autoFocus type="submit">
-								Save
-							</Button>
-							<Button onClick={() => setOpen(false)}>Cancel</Button>
-						</DialogActions>
-					</Box>
-				</Dialog>
+				
+				<AddDialog open={open} onClose={() => setOpen(0)} onSubmit={onSubmit}/>
 			</Box>
-			<div>
+			<Box component="div">
 				<TableContainer component={Paper}>
 					<Table sx={{ minWidth: 500 }} aria-label="custom pagination table">
 						<TableHead>
@@ -258,8 +176,14 @@ export default function CustomPaginationActionsTable() {
 										{row.completed ? 'true' : 'false'}
 									</TableCell>
 									<TableCell align="center">
-										<Button>Edit</Button>
-										<Button onClick={() => onDelete(row.id)}>Delete</Button>
+										<Button onClick={() => {
+											setSelectItem(row)
+											setOpen(3)}
+										}>Edit</Button>
+										<Button onClick={() => {
+											setSelectItem(row)
+											setOpen(2)}
+										}>Delete</Button>
 									</TableCell>
 								</TableRow>
 							))}
@@ -292,7 +216,10 @@ export default function CustomPaginationActionsTable() {
 						</TableFooter>
 					</Table>
 				</TableContainer>
-			</div>
+			</Box>
+									
+			<DeleteDialog open={open} onClose={() => setOpen(0)} onDelete={onDelete}/>
+			<EditDialog open={open} onClose={() => setOpen(0)} selectItem={selectItem} onEdit={onEdit}/>
 		</>
   );
 }

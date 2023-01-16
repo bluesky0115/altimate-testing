@@ -1,10 +1,10 @@
 import './App.css';
-import CustomPaginationActionsTable from './component/Dashboard'
+import Dashboard from './component/Dashboard'
 
 function App() {
   return (
     <div className="App">
-      <CustomPaginationActionsTable/>
+      <Dashboard/>
     </div>
   );
 }
