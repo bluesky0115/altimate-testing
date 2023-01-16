@@ -174,6 +174,7 @@ export default function CustomPaginationActionsTable() {
 							label="Completed Status"
 							onChange={(e) => setFilterStatus(e.target.value)}
 						>
+							<MenuItem value={''}>All</MenuItem>
 							<MenuItem value={false}>false</MenuItem>
 							<MenuItem value={true}>true</MenuItem>
 						</Select>
