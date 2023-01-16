@@ -15,13 +15,17 @@ import FirstPageIcon from '@mui/icons-material/FirstPage';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import LastPageIcon from '@mui/icons-material/LastPage';
-import { TableHead } from '@mui/material';
+import { TableHead, TextField } from '@mui/material';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import { useForm } from "react-hook-form";
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
 
 function TablePaginationActions(props) {
   const theme = useTheme();
@@ -87,14 +91,17 @@ TablePaginationActions.propTypes = {
 export default function CustomPaginationActionsTable() {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
-	const [rows, SetRows ] = React.useState([]);
+	const [rows, setRows ] = React.useState([]);
 	const [open, setOpen] = React.useState(false);
+	const [status, setStatus] = React.useState('')
+	const [userid, setUserId ] = React.useState('')
+	const { register, setValue, handleSubmit } = useForm();
 	
 	React.useEffect(() => {
-		fetch('https://jsonplaceholder.typicode.com/posts')
+		fetch('https://jsonplaceholder.typicode.com/todos')
 		.then((response) => response.json())
-		.then((json) => SetRows(json));
-	})
+		.then((json) => setRows(json));
+	}, [userid])
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
@@ -109,43 +116,106 @@ export default function CustomPaginationActionsTable() {
     setPage(0);
   };
 
-	const handleClickOpen = () => {
-    setOpen(true);
-  };
+	const onSubmit = (data) => {
+		fetch('https://jsonplaceholder.typicode.com/todos', {
+			method: 'POST',
+			body: JSON.stringify({
+				title: data.title,
+				userId: data.userId,
+				completed: data.completed
+			}),
+			headers: {
+				'Content-type': 'application/json; charset=UTF-8',
+			},
+		})
+		.then((response) => response.json())
+		.then((json) => {
+			setRows([...rows, json])
+			setOpen(false)
+		});
+	}
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+	const onDelete = (id) => {
+		fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
+			method: 'DELETE',
+		}).then((response) => response.json())
+		.then((json) => {
+			const newArr = rows.filter((val) => val.id !== id)
+			setRows(newArr)
+		})
+	}
 
   return (
 		<>
-			<div>
-				<Button variant="outlined" onClick={handleClickOpen}>
-					Add
-				</Button>
+			<Box component="div" sx={{padding: '20px'}}>
+				<Box component="div" sx={{display: 'flex', alignItems: 'center', justifyContent:'center', gap: '12px'}}>
+					<TextField placeholder='User Id' value={userid} onChange={(e) => setUserId(e.target.value)}/>
+					<FormControl sx={{width: '300px'}}>
+						<InputLabel id="demo-simple-select-label">Completed Status</InputLabel>
+						<Select
+							labelId="demo-simple-select-label"
+							id="demo-simple-select"
+							value={status}
+							label="Completed Status"
+							onChange={(e) => {
+								setStatus(e.target.value)
+								setValue('completed', e.target.value)
+							}}
+						>
+							<MenuItem value={false}>false</MenuItem>
+							<MenuItem value={true}>true</MenuItem>
+						</Select>
+					</FormControl>
+					<Button variant="contained" onClick={() => setOpen(true)}>
+						Add
+					</Button>
+				</Box>
 				<Dialog
 					open={open}
-					onClose={handleClose}
+					onClose={() => setOpen(false)}
 					aria-labelledby="alert-dialog-title"
 					aria-describedby="alert-dialog-description"
 				>
 					<DialogTitle id="alert-dialog-title">
-						{"Use Google's location service?"}
+						Add Dialog
 					</DialogTitle>
-					<DialogContent>
-						<DialogContentText id="alert-dialog-description">
-							Let Google help apps determine location. This means sending anonymous
-							location data to Google, even when no apps are running.
-						</DialogContentText>
-					</DialogContent>
-					<DialogActions>
-						<Button onClick={handleClose}>Disagree</Button>
-						<Button onClick={handleClose} autoFocus>
-							Agree
-						</Button>
-					</DialogActions>
+					<Box component="form" onSubmit={handleSubmit(onSubmit)}>
+						<DialogContent>
+							<Box sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: '20px',
+							}}>
+								<TextField placeholder='Title' {...register('title')}/>
+								<TextField placeholder='User Id' {...register('userId')}/>
+
+								<FormControl fullWidth>
+									<InputLabel id="demo-simple-select-label">Completed Status</InputLabel>
+									<Select
+										labelId="demo-simple-select-label"
+										id="demo-simple-select"
+										value={status}
+										label="Completed Status"
+										onChange={(e) => {
+											setStatus(e.target.value)
+											setValue('completed', e.target.value)
+										}}
+									>
+										<MenuItem value={false}>false</MenuItem>
+										<MenuItem value={true}>true</MenuItem>
+									</Select>
+								</FormControl>
+							</Box>
+						</DialogContent>
+						<DialogActions>
+							<Button autoFocus type="submit">
+								Save
+							</Button>
+							<Button onClick={() => setOpen(false)}>Cancel</Button>
+						</DialogActions>
+					</Box>
 				</Dialog>
-			</div>
+			</Box>
 			<div>
 				<TableContainer component={Paper}>
 					<Table sx={{ minWidth: 500 }} aria-label="custom pagination table">
@@ -155,6 +225,7 @@ export default function CustomPaginationActionsTable() {
 								<TableCell align="center">Title</TableCell>
 								<TableCell align="center">User ID</TableCell>
 								<TableCell align="center">Completed Status</TableCell>
+								<TableCell align="center">Controls</TableCell>
 							</TableRow>
 						</TableHead>
 						<TableBody>
@@ -172,6 +243,10 @@ export default function CustomPaginationActionsTable() {
 									</TableCell>
 									<TableCell align="center">
 										{row.completed ? 'true' : 'false'}
+									</TableCell>
+									<TableCell align="center">
+										<Button>Edit</Button>
+										<Button onClick={() => onDelete(row.id)}>Delete</Button>
 									</TableCell>
 								</TableRow>
 							))}
