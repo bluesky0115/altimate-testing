@@ -94,14 +94,29 @@ export default function CustomPaginationActionsTable() {
 	const [rows, setRows ] = React.useState([]);
 	const [open, setOpen] = React.useState(false);
 	const [status, setStatus] = React.useState('')
-	const [userid, setUserId ] = React.useState('')
+	const [filteruserid, setFilterUserId ] = React.useState('')
+	const [filterStatus, setFilterStatus ] = React.useState('')
 	const { register, setValue, handleSubmit } = useForm();
 	
 	React.useEffect(() => {
-		fetch('https://jsonplaceholder.typicode.com/todos')
-		.then((response) => response.json())
-		.then((json) => setRows(json));
-	}, [userid])
+		if(filteruserid != '' && filterStatus !== '')
+			fetch(`https://jsonplaceholder.typicode.com/todos?userId=${filteruserid}&&completed=${filterStatus}`)
+			.then((response) => response.json())
+			.then((json) => setRows(json))
+		else if(filteruserid != '' && filterStatus === '')
+			fetch(`https://jsonplaceholder.typicode.com/todos?userId=${filteruserid}`)
+			.then((response) => response.json())
+			.then((json) => setRows(json))
+		else if(filteruserid == '' && filterStatus !== '') {
+			fetch(`https://jsonplaceholder.typicode.com/todos?completed=${filterStatus}`)
+			.then((response) => response.json())
+			.then((json) => setRows(json))
+		}
+		else 
+			fetch(`https://jsonplaceholder.typicode.com/todos`)
+			.then((response) => response.json())
+			.then((json) => setRows(json))
+	}, [filteruserid, filterStatus])
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
@@ -149,18 +164,15 @@ export default function CustomPaginationActionsTable() {
 		<>
 			<Box component="div" sx={{padding: '20px'}}>
 				<Box component="div" sx={{display: 'flex', alignItems: 'center', justifyContent:'center', gap: '12px'}}>
-					<TextField placeholder='User Id' value={userid} onChange={(e) => setUserId(e.target.value)}/>
+					<TextField placeholder='User Id' value={filteruserid} onChange={(e) => setFilterUserId(e.target.value)}/>
 					<FormControl sx={{width: '300px'}}>
 						<InputLabel id="demo-simple-select-label">Completed Status</InputLabel>
 						<Select
 							labelId="demo-simple-select-label"
 							id="demo-simple-select"
-							value={status}
+							value={filterStatus}
 							label="Completed Status"
-							onChange={(e) => {
-								setStatus(e.target.value)
-								setValue('completed', e.target.value)
-							}}
+							onChange={(e) => setFilterStatus(e.target.value)}
 						>
 							<MenuItem value={false}>false</MenuItem>
 							<MenuItem value={true}>true</MenuItem>
