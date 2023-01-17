@@ -57,12 +57,15 @@ export default function Dashboard() {
 	React.useEffect(() => {
 		let countObj = {};
 		let countFunc = keys => {
-			countObj[keys.userId] = (keys.completed ? ++countObj[keys.userId] : countObj[keys.userId]) || 1;
+			if(countObj[keys.userId] == undefined)
+				countObj[keys.userId] = 0;
+			if(keys.completed)
+				countObj[keys.userId]++;
 		}
 		rows.forEach(countFunc);
 
 		let newChartData = Object.keys(countObj).map((val) => {
-			return {id: val, cnt: countObj[val], title: 'custom title'}
+			return {id: val, cnt: countObj[val]}
 		})
 		setChartData(newChartData)
 	}, [rows])
@@ -167,7 +170,7 @@ export default function Dashboard() {
 
   return (
 		<>
-			<Box component="div" sx={{padding: '20px'}}>
+			<Box component="div" style={{padding: '20px', display: 'flex', justifyContent: 'center'}}>
 				<Box component="div" sx={{display: 'flex', alignItems: 'center', justifyContent:'center', gap: '12px'}}>
 					<TextField placeholder='User Id' value={filteruserid} onChange={(e) => setFilterUserId(e.target.value)}/>
 					<FormControl sx={{width: '250px'}}>
@@ -272,7 +275,7 @@ export default function Dashboard() {
 					</Table>
 				</TableContainer>
 
-				<BarChart width={600} height={300} data={chartData}>
+				<BarChart width={1000} height={300} data={chartData} style={{margin: 'auto'}}>
 					<XAxis dataKey="id" stroke="#8884d8" />
 					<YAxis />
 					<Tooltip content={<CustomTooltip rows={rows}/>}/>
@@ -290,7 +293,7 @@ export default function Dashboard() {
 
 function CustomTooltip({ payload, label, active, rows }) {
 	const getTitleFromId = (userId) => {
-		return rows.filter((val) => val.userId == userId)
+		return rows.filter((val) => val.userId == userId && val.completed)
 	}
 
   if (active) {
