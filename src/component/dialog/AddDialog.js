@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useForm } from "react-hook-form";
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -12,30 +12,29 @@ import {TextField} from '@mui/material';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
 
-const EditDialog = ({open, onClose, onEdit, selectItem}) => {
-	const { register, setValue, handleSubmit, reset } = useForm();
+const AddDialog = ({open, onClose, onSubmit}) => {
+	const { register, setValue, handleSubmit, reset, resetField } = useForm();
 	const [status, setStatus] = React.useState('')
 
 	React.useEffect(() => {
-		setValue('title', selectItem?.title)
-		setValue('userId', selectItem?.userId)
-		setValue('completed', selectItem?.completed)
-		setStatus(selectItem ? selectItem.completed : '')
+		setStatus('')
+		reset()
 	}, [open])
 
 	return (
 		<Dialog
-			open={open === 3}
+			open={open === 1}
 			onClose={() => { 
 				reset()
 				onClose()}}
 			aria-labelledby="alert-dialog-title"
 			aria-describedby="alert-dialog-description"
+			fullWidth
 		>
 			<DialogTitle id="alert-dialog-title">
-				Edit Dialog
+				Add Dialog
 			</DialogTitle>
-			<Box component="form" onSubmit={handleSubmit(onEdit)}>
+			<Box component="form" onSubmit={handleSubmit(onSubmit)}>
 				<DialogContent>
 					<Box sx={{
 						display: 'flex',
@@ -43,7 +42,7 @@ const EditDialog = ({open, onClose, onEdit, selectItem}) => {
 						gap: '20px',
 					}}>
 						<TextField placeholder='Title' {...register('title')} required/>
-						<TextField placeholder='User Id' {...register('userId')} required/>
+						<TextField placeholder='User Id' {...register('userId')} required inputProps={{type: 'number'}}/>
 
 						<FormControl fullWidth>
 							<InputLabel id="demo-simple-select-label">Completed Status</InputLabel>
@@ -65,14 +64,17 @@ const EditDialog = ({open, onClose, onEdit, selectItem}) => {
 					</Box>
 				</DialogContent>
 				<DialogActions>
-					<Button autoFocus type="submit">
-						Save
+					<Button autoFocus type="submit" variant="contained">
+						Add
 					</Button>
-					<Button onClick={() => onClose()}>Cancel</Button>
+					<Button onClick={() => {
+						reset()
+						onClose()
+					}} variant="contained" color="error">Cancel</Button>
 				</DialogActions>
 			</Box>
 		</Dialog>
 	)
 }
 
-export default EditDialog
+export default AddDialog

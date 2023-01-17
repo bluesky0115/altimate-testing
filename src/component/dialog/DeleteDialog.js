@@ -15,6 +15,7 @@ const DeleteDialog = ({open, onClose, onDelete}) => {
 			onClose={() => onClose()}
 			aria-labelledby="alert-dialog-title"
 			aria-describedby="alert-dialog-description"
+			fullWidth
 		>
 			<DialogTitle id="alert-dialog-title">
 				Delete Dialog
@@ -24,10 +25,10 @@ const DeleteDialog = ({open, onClose, onDelete}) => {
 					Do you want to delete?
 				</DialogContent>
 				<DialogActions>
-					<Button autoFocus onClick={onDelete}>
+					<Button autoFocus onClick={onDelete} variant="contained">
 						Confirm
 					</Button>
-					<Button onClick={() => onClose()}>Cancel</Button>
+					<Button onClick={() => onClose()} variant="contained" color="error">Cancel</Button>
 				</DialogActions>
 			</Box>
 		</Dialog>

@@ -15,38 +15,57 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
-import AddDialog from './AddDialog';
-import DeleteDialog from './DeleteDialog';
-import EditDialog from './EditDialog';
+import AddDialog from './dialog/AddDialog';
+import DeleteDialog from './dialog/DeleteDialog';
+import EditDialog from './dialog/EditDialog';
+import IconButton from '@mui/material/IconButton';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 export default function Dashboard() {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 	const [rows, setRows ] = React.useState([]);
 	const [open, setOpen] = React.useState(0);
+	const [filterTitle, setFilterTitle ] = React.useState('')
 	const [filteruserid, setFilterUserId ] = React.useState('')
 	const [filterStatus, setFilterStatus ] = React.useState('')
 	const [selectItem, setSelectItem] = React.useState(null)
+	const [chartData, setChartData] = React.useState([])
 
 	React.useEffect(() => {
-		if(filteruserid != '' && filterStatus !== '')
-			fetch(`https://jsonplaceholder.typicode.com/todos?userId=${filteruserid}&&completed=${filterStatus}`)
-			.then((response) => response.json())
-			.then((json) => setRows(json))
-		else if(filteruserid != '' && filterStatus === '')
-			fetch(`https://jsonplaceholder.typicode.com/todos?userId=${filteruserid}`)
-			.then((response) => response.json())
-			.then((json) => setRows(json))
-		else if(filteruserid == '' && filterStatus !== '') {
-			fetch(`https://jsonplaceholder.typicode.com/todos?completed=${filterStatus}`)
+
+		let filterStr = '';
+		if(filteruserid != '') filterStr += `userId=${filteruserid}`;
+		if(filterStatus !== '') filterStr += `&&completed=${filterStatus}`;
+
+		if(filterStr != '') {
+			fetch(`https://jsonplaceholder.typicode.com/todos?${filterStr}`)
 			.then((response) => response.json())
 			.then((json) => setRows(json))
 		}
 		else 
 			fetch(`https://jsonplaceholder.typicode.com/todos`)
 			.then((response) => response.json())
-			.then((json) => setRows(json))
-	}, [filteruserid, filterStatus])
+			.then((json) => {
+				setRows(json)
+			})
+
+	}, [filterTitle, filteruserid, filterStatus])
+
+	React.useEffect(() => {
+		let countObj = {};
+		let countFunc = keys => {
+			countObj[keys.userId] = (keys.completed ? ++countObj[keys.userId] : countObj[keys.userId]) || 1;
+		}
+		rows.forEach(countFunc);
+
+		let newChartData = Object.keys(countObj).map((val) => {
+			return {id: val, cnt: countObj[val], title: 'custom title'}
+		})
+		setChartData(newChartData)
+	}, [rows])
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
@@ -121,6 +140,31 @@ export default function Dashboard() {
 		});
 	}
 
+	const handleChangeTitle = (e) => {
+
+		let filterStr = '';
+		if(filteruserid != '') filterStr += `userId=${filteruserid}`;
+		if(filterStatus !== '') filterStr += `&&completed=${filterStatus}`;
+
+		if(filterStr != '') {
+			fetch(`https://jsonplaceholder.typicode.com/todos?${filterStr}`)
+			.then((response) => response.json())
+			.then((json) => {
+				setRows(json.filter((val) => (val.title.toLowerCase()).includes(e.target.value.toLowerCase())))
+			})
+		}
+		else 
+			fetch(`https://jsonplaceholder.typicode.com/todos`)
+			.then((response) => response.json())
+			.then((json) => {
+				setRows(json.filter((val) => (val.title.toLowerCase()).includes(e.target.value.toLowerCase())))
+			})
+
+
+		// setFilterTitle(e.target.value)
+		// setRows(rows.filter((val) => (val.title.toLowerCase()).includes(e.target.value.toLowerCase())))
+	}
+
   return (
 		<>
 			<Box component="div" sx={{padding: '20px'}}>
@@ -153,7 +197,10 @@ export default function Dashboard() {
 						<TableHead>
 							<TableRow>
 								<TableCell align="center">No</TableCell>
-								<TableCell align="center">Title</TableCell>
+								<TableCell align="center" width={500} sx={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+									<label>Title</label>
+									<input type="text" style={{width: '300px', margin: 'auto'}} onChange={handleChangeTitle}/>
+								</TableCell>
 								<TableCell align="center">User ID</TableCell>
 								<TableCell align="center">Completed Status</TableCell>
 								<TableCell align="center">Controls</TableCell>
@@ -166,7 +213,7 @@ export default function Dashboard() {
 							).map((row, ind) => (
 								<TableRow key={ind}>
 									<TableCell align="center">{page * rowsPerPage + ind + 1}</TableCell>
-									<TableCell component="th" scope="row" align="center">
+									<TableCell component="th" scope="row" align="center" width={500}>
 										{row.title}
 									</TableCell>
 									<TableCell align="center">
@@ -176,14 +223,21 @@ export default function Dashboard() {
 										{row.completed ? 'true' : 'false'}
 									</TableCell>
 									<TableCell align="center">
-										<Button onClick={() => {
+
+										<IconButton aria-label="edit" onClick={() => {
 											setSelectItem(row)
 											setOpen(3)}
-										}>Edit</Button>
-										<Button onClick={() => {
+										} variant="contained" color="primary">
+											<EditIcon />
+										</IconButton>
+
+										<IconButton aria-label="delete" onClick={() => {
 											setSelectItem(row)
 											setOpen(2)}
-										}>Delete</Button>
+										} variant="contained" color="error">
+											<DeleteIcon />
+										</IconButton>
+
 									</TableCell>
 								</TableRow>
 							))}
@@ -198,6 +252,7 @@ export default function Dashboard() {
 							<TableRow>
 								<TablePagination
 									rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+									align='center'
 									colSpan={3}
 									count={rows.length}
 									rowsPerPage={rowsPerPage}
@@ -216,55 +271,52 @@ export default function Dashboard() {
 						</TableFooter>
 					</Table>
 				</TableContainer>
+
+				<BarChart width={600} height={300} data={chartData}>
+					<XAxis dataKey="id" stroke="#8884d8" />
+					<YAxis />
+					<Tooltip content={<CustomTooltip rows={rows}/>}/>
+					<CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+					<Bar dataKey="cnt" fill="#8884d8" barSize={30} />
+				</BarChart>
 			</Box>
 									
 			<DeleteDialog open={open} onClose={() => setOpen(0)} onDelete={onDelete}/>
 			<EditDialog open={open} onClose={() => setOpen(0)} selectItem={selectItem} onEdit={onEdit}/>
 
-			<div className="App">
-				<h1>GEEKSFORGEEKS BAR CHART REACTJS</h1>
-				<div style={{ maxWidth: "650px" }}>
-					<Bar
-						data={{
-							// Name of the variables on x-axies for each bar
-							labels: ["1st bar", "2nd bar", "3rd bar", "4th bar"],
-							datasets: [
-								{
-									// Label for bars
-									label: "total count/value",
-									// Data or value of your each variable
-									data: [1552, 1319, 613, 1400],
-									// Color of each bar
-									backgroundColor: ["aqua", "green", "red", "yellow"],
-									// Border color of each bar
-									borderColor: ["aqua", "green", "red", "yellow"],
-									borderWidth: 0.5,
-								},
-							],
-						}}
-						// Height of graph
-						height={400}
-						options={{
-							maintainAspectRatio: false,
-							scales: {
-								yAxes: [
-									{
-										ticks: {
-											// The y-axis value will start from zero
-											beginAtZero: true,
-										},
-									},
-								],
-							},
-							legend: {
-								labels: {
-									fontSize: 15,
-								},
-							},
-						}}
-					/>
-				</div>
-			</div>
 		</>
   );
+}
+
+function CustomTooltip({ payload, label, active, rows }) {
+	const getTitleFromId = (userId) => {
+		return rows.filter((val) => val.userId == userId)
+	}
+
+  if (active) {
+    return (
+      <div className="custom-tooltip" style={{backgroundColor: 'white'}}>
+				<p className="label">UserId : {label}</p>
+        <p className="label">{`Cnt : ${payload? payload[0].value : ''}`}</p>
+        <div style={{display: 'flex', flexDirection: 'column'}}>
+					{
+						getTitleFromId(label)?.map((val, index) => index < 3 &&
+							(
+								<label key={index}>
+									{val.title}
+								</label>
+							)
+						)
+					}
+					{
+						getTitleFromId(label).length > 3 && (
+							<p>...</p>
+						)
+					}
+				</div>
+      </div>
+    );
+  }
+
+  return null;
 }
