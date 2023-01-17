@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react';
 import { useForm } from "react-hook-form";
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -14,19 +14,22 @@ import Select from '@mui/material/Select';
 
 const AddDialog = ({open, onClose, onSubmit}) => {
 	const { register, setValue, handleSubmit, reset, resetField } = useForm();
-	const [status, setStatus] = React.useState('')
+	const [status, setStatus] = React.useState('');
 
+	//Open dialog with initial data
 	React.useEffect(() => {
-		setStatus('')
-		reset()
+		setStatus('');
+		reset();
 	}, [open])
 
 	return (
 		<Dialog
 			open={open === 1}
 			onClose={() => { 
-				reset()
-				onClose()}}
+				reset();
+				onClose();
+				}
+			}
 			aria-labelledby="alert-dialog-title"
 			aria-describedby="alert-dialog-description"
 			fullWidth
@@ -52,8 +55,8 @@ const AddDialog = ({open, onClose, onSubmit}) => {
 								value={status}
 								label="Completed Status"
 								onChange={(e) => {
-									setStatus(e.target.value)
-									setValue('completed', e.target.value)
+									setStatus(e.target.value);
+									setValue('completed', e.target.value);
 								}}
 								required
 							>
@@ -68,8 +71,8 @@ const AddDialog = ({open, onClose, onSubmit}) => {
 						Add
 					</Button>
 					<Button onClick={() => {
-						reset()
-						onClose()
+						reset();
+						onClose();
 					}} variant="contained" color="error">Cancel</Button>
 				</DialogActions>
 			</Box>

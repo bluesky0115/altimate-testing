@@ -28,14 +28,13 @@ export default function Dashboard() {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 	const [rows, setRows ] = React.useState([]);
 	const [open, setOpen] = React.useState(0);
-	const [filterTitle, setFilterTitle ] = React.useState('')
-	const [filteruserid, setFilterUserId ] = React.useState('')
-	const [filterStatus, setFilterStatus ] = React.useState('')
-	const [selectItem, setSelectItem] = React.useState(null)
-	const [chartData, setChartData] = React.useState([])
+	const [filteruserid, setFilterUserId ] = React.useState('');
+	const [filterStatus, setFilterStatus ] = React.useState('');
+	const [selectItem, setSelectItem] = React.useState(null);
+	const [chartData, setChartData] = React.useState([]);
 
+	//useEffect Get todos 
 	React.useEffect(() => {
-
 		let filterStr = '';
 		if(filteruserid != '') filterStr += `userId=${filteruserid}`;
 		if(filterStatus !== '') filterStr += `&&completed=${filterStatus}`;
@@ -49,11 +48,11 @@ export default function Dashboard() {
 			fetch(`https://jsonplaceholder.typicode.com/todos`)
 			.then((response) => response.json())
 			.then((json) => {
-				setRows(json)
+				setRows(json);
 			})
+	}, [filteruserid, filterStatus])
 
-	}, [filterTitle, filteruserid, filterStatus])
-
+	//make chartData from rows when rows change
 	React.useEffect(() => {
 		let countObj = {};
 		let countFunc = keys => {
@@ -67,22 +66,25 @@ export default function Dashboard() {
 		let newChartData = Object.keys(countObj).map((val) => {
 			return {id: val, cnt: countObj[val]}
 		})
-		setChartData(newChartData)
+		setChartData(newChartData);
 	}, [rows])
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
+	//call function when page change
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+	//call function when PerPage value change
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
+	//add new data to database
 	const onSubmit = (data) => {
 		fetch('https://jsonplaceholder.typicode.com/todos', {
 			method: 'POST',
@@ -97,23 +99,25 @@ export default function Dashboard() {
 		})
 		.then((response) => response.json())
 		.then((json) => {
-			setRows([...rows, json])
-			setOpen(0)
+			setRows([...rows, json]);
+			setOpen(0);
 		});
 	}
 
+	//delete data from database
 	const onDelete = () => {
 		fetch(`https://jsonplaceholder.typicode.com/todos/${selectItem.id}`, {
 			method: 'DELETE',
 		}).then((response) => response.json())
 		.then((json) => {
-			const newArr = rows.filter((val) => val.id !== selectItem.id)
-			setSelectItem(null)
-			setRows(newArr)
-			setOpen(0)
+			const newArr = rows.filter((val) => val.id !== selectItem.id);
+			setSelectItem(null);
+			setRows(newArr);
+			setOpen(0);
 		})
 	}
 
+	//update data from database
 	const onEdit = (data) => {
 		fetch('https://jsonplaceholder.typicode.com/posts/1', {
 			method: 'PUT',
@@ -132,19 +136,19 @@ export default function Dashboard() {
 			setSelectItem(null)
 			const newArr = rows.filter((val) => {
 				if(val.id == selectItem.id) {
-					val.title = data.title
-					val.userId = data.userId
-					val.completed = data.completed
+					val.title = data.title;
+					val.userId = data.userId;
+					val.completed = data.completed;
 				}
 				return val
 			})
-			setRows(newArr)
-			setOpen(0)
+			setRows(newArr);
+			setOpen(0);
 		});
 	}
 
+	//filter with title input
 	const handleChangeTitle = (e) => {
-
 		let filterStr = '';
 		if(filteruserid != '') filterStr += `userId=${filteruserid}`;
 		if(filterStatus !== '') filterStr += `&&completed=${filterStatus}`;
@@ -153,27 +157,24 @@ export default function Dashboard() {
 			fetch(`https://jsonplaceholder.typicode.com/todos?${filterStr}`)
 			.then((response) => response.json())
 			.then((json) => {
-				setRows(json.filter((val) => (val.title.toLowerCase()).includes(e.target.value.toLowerCase())))
+				setRows(json.filter((val) => (val.title.toLowerCase()).includes(e.target.value.toLowerCase())));
 			})
 		}
 		else 
 			fetch(`https://jsonplaceholder.typicode.com/todos`)
 			.then((response) => response.json())
 			.then((json) => {
-				setRows(json.filter((val) => (val.title.toLowerCase()).includes(e.target.value.toLowerCase())))
+				setRows(json.filter((val) => (val.title.toLowerCase()).includes(e.target.value.toLowerCase())));
 			})
-
-
-		// setFilterTitle(e.target.value)
-		// setRows(rows.filter((val) => (val.title.toLowerCase()).includes(e.target.value.toLowerCase())))
 	}
 
   return (
 		<>
+			<p>Altimate AI Assignment (Kouto Kamio)</p>
 			<Box component="div" style={{padding: '20px', display: 'flex', justifyContent: 'center'}}>
 				<Box component="div" sx={{display: 'flex', alignItems: 'center', justifyContent:'center', gap: '12px'}}>
-					<TextField placeholder='User Id' value={filteruserid} onChange={(e) => setFilterUserId(e.target.value)}/>
-					<FormControl sx={{width: '250px'}}>
+					<TextField size="small" placeholder='User Id' value={filteruserid} onChange={(e) => setFilterUserId(e.target.value)}/>
+					<FormControl sx={{width: '250px'}} size="small">
 						<InputLabel id="demo-simple-select-label">Completed Status</InputLabel>
 						<Select
 							labelId="demo-simple-select-label"
@@ -194,7 +195,7 @@ export default function Dashboard() {
 				
 				<AddDialog open={open} onClose={() => setOpen(0)} onSubmit={onSubmit}/>
 			</Box>
-			<Box component="div">
+			<Box component="div" style={{padding: '20px'}}>
 				<TableContainer component={Paper}>
 					<Table sx={{ minWidth: 500 }} aria-label="custom pagination table">
 						<TableHead>
@@ -275,13 +276,17 @@ export default function Dashboard() {
 					</Table>
 				</TableContainer>
 
-				<BarChart width={1000} height={300} data={chartData} style={{margin: 'auto'}}>
-					<XAxis dataKey="id" stroke="#8884d8" />
-					<YAxis />
-					<Tooltip content={<CustomTooltip rows={rows}/>}/>
-					<CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-					<Bar dataKey="cnt" fill="#8884d8" barSize={30} />
-				</BarChart>
+				{
+					chartData.length > 0 && 
+						<BarChart width={1000} height={300} data={chartData} style={{margin: 'auto', marginTop: '40px'}}>
+							<XAxis dataKey="id" stroke="#8884d8" />
+							<YAxis />
+							<Tooltip content={<CustomTooltip rows={rows}/>}/>
+							<CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+							<Bar dataKey="cnt" fill="#8884d8" barSize={30} />
+					</BarChart>
+				}
+				
 			</Box>
 									
 			<DeleteDialog open={open} onClose={() => setOpen(0)} onDelete={onDelete}/>

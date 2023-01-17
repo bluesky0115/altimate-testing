@@ -14,21 +14,23 @@ import Select from '@mui/material/Select';
 
 const EditDialog = ({open, onClose, onEdit, selectItem}) => {
 	const { register, setValue, handleSubmit, reset } = useForm();
-	const [status, setStatus] = React.useState('')
+	const [status, setStatus] = React.useState('');
 
 	React.useEffect(() => {
-		setValue('title', selectItem?.title)
-		setValue('userId', selectItem?.userId)
-		setValue('completed', selectItem?.completed)
-		setStatus(selectItem ? selectItem.completed : '')
+		setValue('title', selectItem?.title);
+		setValue('userId', selectItem?.userId);
+		setValue('completed', selectItem?.completed);
+		setStatus(selectItem ? selectItem.completed : '');
 	}, [open])
 
 	return (
 		<Dialog
 			open={open === 3}
 			onClose={() => { 
-				reset()
-				onClose()}}
+				reset();
+				onClose();
+				}
+			}
 			aria-labelledby="alert-dialog-title"
 			aria-describedby="alert-dialog-description"
 			fullWidth
@@ -54,8 +56,8 @@ const EditDialog = ({open, onClose, onEdit, selectItem}) => {
 								value={status}
 								label="Completed Status"
 								onChange={(e) => {
-									setStatus(e.target.value)
-									setValue('completed', e.target.value)
+									setStatus(e.target.value);
+									setValue('completed', e.target.value);
 								}}
 								required
 							>
